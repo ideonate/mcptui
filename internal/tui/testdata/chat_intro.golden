@@ -23,7 +23,7 @@ mcptui ─ test ─ testserver 1.2.3 (#)                                        
 ▌   Use echo to test.                   │   }
                                         │ }
   ◂ notifications/tools/list_changed    │
-    list changed · refreshed            │  In the message box:
+    list changed · refreshed            │
   ⚒ Tools   ✎ Prompts   ▤ Resources & templates   ↔ Ping   ↓ browse
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  › tool, prompt or resource #

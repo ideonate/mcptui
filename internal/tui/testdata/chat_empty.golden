@@ -23,7 +23,7 @@ mcptui ─ test ─ testserver 1.2.3 (#)                                        
                                         │   }
                                         │ }
 ▌ ● Connected to testserver 1.2.3       │
-▌   Use echo to test.                   │  In the message box:
+▌   Use echo to test.                   │
   ⚒ Tools   ✎ Prompts   ▤ Resources & templates   ↔ Ping   ↓ browse
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  › tool, prompt or resource #

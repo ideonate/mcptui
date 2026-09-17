@@ -254,37 +254,8 @@ func (a *App) initCustom(ex *mcp.Exchange) func(int, viewMode) string {
 		} else {
 			lines = append(lines, th.dimText.Render("(the server sent no instructions)"), "")
 		}
-		lines = append(lines, a.rd.section("capabilities", w), a.rd.jsonBlock(caps.Capabilities, w), "")
-		lines = append(lines, a.chatExamples()...)
+		lines = append(lines, a.rd.section("capabilities", w), a.rd.jsonBlock(caps.Capabilities, w))
 		return strings.Join(lines, "\n")
-	}
-}
-
-// chatExamples shows what can be typed in the message box, using names from
-// the connected server.
-func (a *App) chatExamples() []string {
-	th := a.th
-	tool, prompt, uri := "my_tool", "my_prompt", "file:///path"
-	if len(a.tools) > 0 {
-		tool = a.tools[0].Name
-	}
-	if len(a.prompts) > 0 {
-		prompt = a.prompts[0].Name
-	}
-	if len(a.resources) > 0 {
-		uri = a.resources[0].URI
-	}
-	ex := func(cmd, what string) string {
-		return "   " + padRight(th.accentText.Render(cmd), 28) + " " + th.dimText.Render(what)
-	}
-	return []string{
-		" " + th.bold.Render("In the message box:"),
-		ex(tool+` {"key": "value"}`, "call a tool with JSON"),
-		ex(tool+" key=value", "or key=value pairs"),
-		ex(prompt, "get a prompt (a form opens if it needs arguments)"),
-		ex("read "+uri, "read a resource"),
-		ex("ping", ""),
-		"", th.dimText.Render(" ↓ in the empty box browses everything · tab completes · ↑ recalls"),
 	}
 }
 
@@ -1504,9 +1475,9 @@ func (a *App) renderChatDetail(width, height int) string {
 	}
 	it := c.selected()
 	if it == nil {
-		msg := append([]string{"", " " + th.title.Render("Chat"), "",
+		msg := []string{"", " " + th.title.Render("Chat"), "",
 			" Every request in this session appears here, including ones",
-			" made from the Tools, Prompts and Resources tabs.", ""}, a.chatExamples()...)
+			" made from the Tools, Prompts and Resources tabs."}
 		return fitLines(strings.Join(msg, "\n"), width, height)
 	}
 
