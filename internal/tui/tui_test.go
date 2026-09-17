@@ -405,10 +405,10 @@ func TestChatMouse(t *testing.T) {
 	h.click("4 Chat")
 	h.typeText("sl")
 	h.click("slow")
-	if v := h.a.chat.input.Value(); v != "slow " {
-		t.Fatalf("clicking a suggestion: %q", v)
+	if h.a.chat.compose != "tool:slow" || h.a.focus != focusForm || len(h.a.chat.items) == 0 {
+		t.Fatalf("clicking a suggestion should open its form: compose %q focus %d", h.a.chat.compose, h.a.focus)
 	}
-	h.key("enter")
+	h.click("[ Call ⏎ ]")
 	h.waitFor("slow", func() bool { it := h.a.chat.selected(); return it != nil && it.entry != nil })
 	h.click("[ Edit e ]")
 	if h.a.chat.compose != "tool:slow" {
@@ -970,6 +970,16 @@ func TestChatBrowseMenu(t *testing.T) {
 	if len(h.a.chat.sugg) != 1 || h.a.chat.sugg[0].label != "slow" {
 		t.Fatalf("filtered = %+v", h.a.chat.sugg)
 	}
+	// Picking opens the form, even with no required arguments; nothing is
+	// sent until it's confirmed.
+	n := len(h.a.chat.items)
+	h.key("enter")
+	if h.a.chat.compose != "tool:slow" || h.a.focus != focusForm || len(h.a.chat.items) != n {
+		t.Fatalf("picking should open the form without sending: compose %q items %d→%d", h.a.chat.compose, n, len(h.a.chat.items))
+	}
+	if !strings.Contains(h.screen(), "Cancel esc") {
+		t.Fatalf("form should offer Cancel:\n%s", h.screen())
+	}
 	h.key("enter")
 	h.waitFor("slow", func() bool { it := h.a.chat.selected(); return it != nil && it.name == "slow" && it.entry != nil })
 
@@ -995,7 +1005,7 @@ func TestChatBrowseMenu(t *testing.T) {
 		t.Fatal("↓ should leave the bar")
 	}
 	h.key("up", "up")
-	if v := h.a.chat.input.Value(); v != "call slow" {
+	if v := h.a.chat.input.Value(); v != "slow" {
 		t.Fatalf("recall = %q", v)
 	}
 	// Clicking the bar works too.
@@ -1070,5 +1080,60 @@ func TestChatShowsConnectionAndServerMessages(t *testing.T) {
 	}
 	if s := h.screen(); !strings.Contains(s, "log info") || !strings.Contains(s, `"level": "info"`) {
 		t.Fatalf("notification detail:\n%s", s)
+	}
+}
+
+func TestChatCallSyntax(t *testing.T) {
+	h := newHarness(t, nil, testserver.Options{})
+	h.key("4")
+	send := func(line, name, wantArgs string) {
+		t.Helper()
+		h.typeText(line)
+		h.key("enter")
+		h.waitFor(line, func() bool {
+			it := h.a.chat.selected()
+			return it != nil && it.name == name && it.entry != nil
+		})
+		if got := commandArgs(h.a.chat.selected().args); got != wantArgs {
+			t.Fatalf("%s: args %s, want %s", line, got, wantArgs)
+		}
+	}
+	send("add(2, 3)", "add", `{"a":2,"b":3}`)
+	send(`call echo("hi, (there)")`, "echo", `{"message":"hi, (there)"}`)
+	send("slow(steps=1, interval=1)", "slow", `{"interval":1,"steps":1}`)
+	send("greet(Ada)", "greet", `{"name":"Ada"}`)
+
+	n := len(h.a.chat.items)
+	h.typeText("add(1, 2, 3)")
+	h.key("enter")
+	if len(h.a.chat.items) != n || !strings.Contains(h.a.flash, "too many arguments") {
+		t.Fatalf("extra argument: items %d→%d flash %q", n, len(h.a.chat.items), h.a.flash)
+	}
+}
+
+func TestParseCallArgs(t *testing.T) {
+	typeOf := func(k string) string {
+		return map[string]string{"id": "integer", "name": "string", "tags": "array", "on": "boolean"}[k]
+	}
+	params := []string{"id", "name", "tags", "on"}
+	for in, want := range map[string]string{
+		"()":                      `{}`,
+		"(7025)":                  `{"id":7025}`,
+		"(7, 42)":                 `{"id":7,"name":"42"}`,
+		`(7, "a, b", ["x", "y"])`: `{"id":7,"name":"a, b","tags":["x","y"]}`,
+		"(7, 'it''s')":            `{"id":7,"name":"it''s"}`,
+		"(on=true, id=1)":         `{"id":1,"on":true}`,
+		`(1, name="x=y")`:         `{"id":1,"name":"x=y"}`,
+		`(1, "a\"b")`:             `{"id":1,"name":"a\"b"}`,
+	} {
+		got, err := parseArgs(in, params, typeOf)
+		if err != nil || string(got) != want {
+			t.Errorf("parseArgs(%s) = %s, %v; want %s", in, got, err, want)
+		}
+	}
+	for _, in := range []string{"(1", "(1, 2, 3, 4, 5)", `(1, "x)`, "(1, [1)", "(id=)"} {
+		if _, err := parseArgs(in, params, typeOf); err == nil {
+			t.Errorf("parseArgs(%s) should fail", in)
+		}
 	}
 }

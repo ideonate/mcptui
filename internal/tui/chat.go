@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
@@ -16,14 +17,15 @@ import (
 
 	"github.com/ideonate/mcptui/internal/history"
 	"github.com/ideonate/mcptui/internal/mcp"
+	"github.com/ideonate/mcptui/internal/schemaform"
 	"github.com/ideonate/mcptui/internal/uritemplate"
 )
 
 // The Chat tab is a transcript of every request in the session, with a
-// message box for firing off new ones: `add {"a":1}`, `greet name=Ada`,
-// `read test://readme`. Picking something that needs arguments opens its
-// form on the right; the right pane otherwise shows the selected entry in
-// full.
+// message box for firing off new ones: `add(1, 2)`, `add {"a":1}`,
+// `greet name=Ada`, `read test://readme`. Picking a suggestion, or typing
+// something that needs arguments, opens its form on the right; the right
+// pane otherwise shows the selected entry in full.
 
 // chatItem is one request in the transcript.
 type chatItem struct {
@@ -343,13 +345,13 @@ func (a *App) parseCommand(line string) (*chatTarget, error) {
 	case "ping":
 		return &chatTarget{key: "ping:"}, nil
 	case "call", "tool":
-		name, args, _ := strings.Cut(rest, " ")
+		name, args := splitName(rest)
 		if a.findTool(name) == nil {
 			return nil, fmt.Errorf("no tool named %q", name)
 		}
 		return a.toolTarget(name, args)
 	case "get", "prompt":
-		name, args, _ := strings.Cut(rest, " ")
+		name, args := splitName(rest)
 		if a.findPrompt(name) == nil {
 			return nil, fmt.Errorf("no prompt named %q", name)
 		}
@@ -358,11 +360,12 @@ func (a *App) parseCommand(line string) (*chatTarget, error) {
 		uri, args, _ := strings.Cut(rest, " ")
 		return a.readTarget(uri, args)
 	}
+	name, args := splitName(line)
 	switch {
-	case a.findTool(word) != nil:
-		return a.toolTarget(word, rest)
-	case a.findPrompt(word) != nil:
-		return a.promptTarget(word, rest)
+	case a.findTool(name) != nil:
+		return a.toolTarget(name, args)
+	case a.findPrompt(name) != nil:
+		return a.promptTarget(name, args)
 	case strings.Contains(word, "://"), a.findTemplate(word) != nil:
 		return a.readTarget(word, rest)
 	}
@@ -371,13 +374,59 @@ func (a *App) parseCommand(line string) (*chatTarget, error) {
 			return &chatTarget{key: "res:" + r.URI}, nil
 		}
 	}
-	return nil, fmt.Errorf("no tool, prompt or resource named %q", word)
+	return nil, fmt.Errorf("no tool, prompt or resource named %q", name)
+}
+
+// splitName separates a name from its arguments, written either as
+// "name args" or as "name(args)".
+func splitName(s string) (name, rest string) {
+	s = strings.TrimSpace(s)
+	sp := strings.IndexAny(s, " \t")
+	if p := strings.IndexByte(s, '('); p > 0 && (sp < 0 || p < sp) {
+		return s[:p], s[p:]
+	}
+	name, rest, _ = strings.Cut(s, " ")
+	return name, strings.TrimSpace(rest)
+}
+
+// params lists the argument names for key in call order: required ones
+// first, then optional ones, each in the order the server lists them.
+func (a *App) params(key string) (names []string, required int) {
+	f := a.formFor(key)
+	if f == nil {
+		return nil, 0
+	}
+	var opt []string
+	for _, fd := range f.Fields() {
+		switch {
+		case fd.Name == schemaform.RootFieldName:
+		case fd.Required:
+			names = append(names, fd.Name)
+		default:
+			opt = append(opt, fd.Name)
+		}
+	}
+	return append(names, opt...), len(names)
+}
+
+// signature renders key's parameters like "(project, limit?)".
+func (a *App) signature(key string) string {
+	names, required := a.params(key)
+	parts := make([]string, len(names))
+	for i, n := range names {
+		parts[i] = n
+		if i >= required {
+			parts[i] += "?"
+		}
+	}
+	return "(" + strings.Join(parts, ", ") + ")"
 }
 
 func (a *App) toolTarget(name, rest string) (*chatTarget, error) {
 	t := a.findTool(name)
 	target := &chatTarget{key: "tool:" + name}
-	args, err := parseArgs(strings.TrimSpace(rest), func(k string) string { return schemaPropType(t.InputSchema, k) })
+	names, _ := a.params(target.key)
+	args, err := parseArgs(strings.TrimSpace(rest), names, func(k string) string { return schemaPropType(t.InputSchema, k) })
 	if err != nil {
 		return nil, err
 	}
@@ -394,7 +443,8 @@ func (a *App) toolTarget(name, rest string) (*chatTarget, error) {
 
 func (a *App) promptTarget(name, rest string) (*chatTarget, error) {
 	p := a.findPrompt(name)
-	args, err := parseArgs(strings.TrimSpace(rest), func(string) string { return "string" })
+	names, _ := a.params("prompt:" + name)
+	args, err := parseArgs(strings.TrimSpace(rest), names, func(string) string { return "string" })
 	if err != nil {
 		return nil, err
 	}
@@ -414,7 +464,7 @@ func (a *App) readTarget(uri, rest string) (*chatTarget, error) {
 		return nil, fmt.Errorf("read what? e.g. read test://readme")
 	}
 	if a.findTemplate(uri) != nil || strings.Contains(uri, "{") {
-		args, err := parseArgs(strings.TrimSpace(rest), func(string) string { return "string" })
+		args, err := parseArgs(strings.TrimSpace(rest), nil, func(string) string { return "string" })
 		if err != nil {
 			return nil, err
 		}
@@ -436,12 +486,16 @@ func (a *App) readTarget(uri, rest string) (*chatTarget, error) {
 	return &chatTarget{key: "res:" + uri}, nil
 }
 
-// parseArgs accepts a JSON object or key=value pairs. typeOf gives the JSON
-// Schema type for a key so values like 3 or true are sent as numbers or
-// booleans only where the schema expects them.
-func parseArgs(rest string, typeOf func(string) string) (json.RawMessage, error) {
+// parseArgs accepts a JSON object, key=value pairs, or a parenthesised list
+// like (7, name="x") whose positional values fill params in order. typeOf
+// gives the JSON Schema type for a key so values like 3 or true are sent as
+// numbers or booleans only where the schema expects them.
+func parseArgs(rest string, params []string, typeOf func(string) string) (json.RawMessage, error) {
 	if rest == "" {
 		return nil, nil
+	}
+	if strings.HasPrefix(rest, "(") {
+		return parseCallArgs(rest, params, typeOf)
 	}
 	if strings.HasPrefix(rest, "{") {
 		var obj map[string]any
@@ -460,21 +514,118 @@ func parseArgs(rest string, typeOf func(string) string) (json.RawMessage, error)
 		if !ok || k == "" {
 			return nil, fmt.Errorf("expected key=value, got %q", p)
 		}
-		switch typeOf(k) {
-		case "string", "":
-			b, _ := json.Marshal(v)
-			obj[k] = b
-		default:
-			if json.Valid([]byte(v)) {
-				obj[k] = json.RawMessage(v)
-			} else {
-				b, _ := json.Marshal(v)
-				obj[k] = b
+		obj[k] = argValue(v, typeOf(k))
+	}
+	b, _ := json.Marshal(obj)
+	return b, nil
+}
+
+// argValue encodes an unquoted value as JSON for a property of type typ.
+func argValue(v, typ string) json.RawMessage {
+	if typ != "string" && typ != "" && json.Valid([]byte(v)) {
+		return json.RawMessage(v)
+	}
+	b, _ := json.Marshal(v)
+	return b
+}
+
+// parseCallArgs parses "(a, b, key=c)". Values may be JSON (including
+// quoted strings and nested objects) or bare words.
+func parseCallArgs(rest string, params []string, typeOf func(string) string) (json.RawMessage, error) {
+	if !strings.HasSuffix(rest, ")") {
+		return nil, fmt.Errorf("missing ) after arguments")
+	}
+	parts, err := splitTopLevel(rest[1 : len(rest)-1])
+	if err != nil {
+		return nil, err
+	}
+	obj := map[string]json.RawMessage{}
+	for i, p := range parts {
+		k, v := "", p
+		if eq := strings.IndexByte(p, '='); eq > 0 && isIdent(strings.TrimSpace(p[:eq])) {
+			k, v = strings.TrimSpace(p[:eq]), strings.TrimSpace(p[eq+1:])
+		} else {
+			if i >= len(params) {
+				return nil, fmt.Errorf("too many arguments: expected at most %d (%s)", len(params), strings.Join(params, ", "))
 			}
+			k = params[i]
+		}
+		if v == "" {
+			return nil, fmt.Errorf("missing value for %s", k)
+		}
+		typ := typeOf(k)
+		switch {
+		case len(v) >= 2 && v[0] == '\'' && v[len(v)-1] == '\'':
+			obj[k], _ = json.Marshal(v[1 : len(v)-1])
+		case v[0] == '"':
+			var str string
+			if err := json.Unmarshal([]byte(v), &str); err != nil {
+				return nil, fmt.Errorf("bad string for %s: %s", k, v)
+			}
+			obj[k], _ = json.Marshal(str)
+		case v[0] == '{' || v[0] == '[':
+			if !json.Valid([]byte(v)) {
+				return nil, fmt.Errorf("bad JSON for %s: %s", k, v)
+			}
+			obj[k] = json.RawMessage(v)
+		default:
+			obj[k] = argValue(v, typ)
 		}
 	}
 	b, _ := json.Marshal(obj)
 	return b, nil
+}
+
+// splitTopLevel splits s on commas that aren't inside quotes, brackets or
+// braces, trimming each part. An empty s gives no parts.
+func splitTopLevel(s string) ([]string, error) {
+	if strings.TrimSpace(s) == "" {
+		return nil, nil
+	}
+	var (
+		parts []string
+		depth int
+		quote rune
+		esc   bool
+		start int
+	)
+	for i, r := range s {
+		switch {
+		case esc:
+			esc = false
+		case quote != 0:
+			if r == '\\' && quote == '"' {
+				esc = true
+			} else if r == quote {
+				quote = 0
+			}
+		case r == '"' || r == '\'':
+			quote = r
+		case r == '{' || r == '[':
+			depth++
+		case r == '}' || r == ']':
+			depth--
+		case r == ',' && depth == 0:
+			parts = append(parts, strings.TrimSpace(s[start:i]))
+			start = i + 1
+		}
+	}
+	if quote != 0 {
+		return nil, fmt.Errorf("unterminated quote in arguments")
+	}
+	return append(parts, strings.TrimSpace(s[start:])), nil
+}
+
+func isIdent(s string) bool {
+	if s == "" {
+		return false
+	}
+	for i, r := range s {
+		if r != '_' && r != '-' && r != '.' && !unicode.IsLetter(r) && (i == 0 || !unicode.IsDigit(r)) {
+			return false
+		}
+	}
+	return true
 }
 
 // schemaPropType returns the (first non-null) type of a property.
@@ -685,7 +836,7 @@ func (a *App) updateSuggestions() {
 			if verb != "" {
 				insert = "call " + insert
 			}
-			add(suggestion{icon: kindIcon("tool"), label: t.Name, desc: t.Description, insert: insert}, t.Name)
+			add(suggestion{icon: kindIcon("tool"), label: t.Name, desc: a.signature("tool:"+t.Name) + " " + t.Description, insert: insert}, t.Name)
 		}
 	}
 	if verb == "" || verb == "get" || verb == "prompt" {
@@ -694,7 +845,7 @@ func (a *App) updateSuggestions() {
 			if verb != "" {
 				insert = "get " + insert
 			}
-			add(suggestion{icon: kindIcon("prompt"), label: p.Name, desc: p.Description, insert: insert}, p.Name)
+			add(suggestion{icon: kindIcon("prompt"), label: p.Name, desc: a.signature("prompt:"+p.Name) + " " + p.Description, insert: insert}, p.Name)
 		}
 	}
 	if verb == "" || verb == "read" || verb == "resource" {
@@ -757,6 +908,29 @@ func (a *App) acceptSuggestion(i int) {
 	c.sugg = nil
 }
 
+// pickSuggestion chooses a listed item. A category lists its items; anything
+// else opens its form, so arguments can be filled in (or seen to be empty)
+// before it is sent.
+func (a *App) pickSuggestion(i int) tea.Cmd {
+	c := a.chat
+	if i < 0 || i >= len(c.sugg) {
+		return a.focusComposer()
+	}
+	sg := c.sugg[i]
+	if sg.category {
+		a.acceptSuggestion(i)
+		return a.focusComposer()
+	}
+	target, err := a.parseCommand(sg.insert)
+	if err != nil {
+		a.acceptSuggestion(i)
+		return a.focusComposer()
+	}
+	c.input.SetValue("")
+	a.updateSuggestions()
+	return a.openCompose(target.key, target.args)
+}
+
 // ---------------------------------------------------------------- keys
 
 // isBareVerb reports whether the input is only a category verb like "call ".
@@ -774,12 +948,8 @@ func (a *App) composerKey(msg tea.Msg) tea.Cmd {
 	if k, ok := msg.(tea.KeyPressMsg); ok {
 		switch k.String() {
 		case "enter":
-			if len(c.sugg) > 0 && c.suggIdx >= 0 {
-				wasCategory := c.sugg[c.suggIdx].category
-				a.acceptSuggestion(c.suggIdx)
-				if wasCategory {
-					return nil
-				}
+			if len(c.sugg) > 0 && c.suggIdx >= 0 && c.sugg[c.suggIdx].label != "(no matches)" {
+				return a.pickSuggestion(c.suggIdx)
 			}
 			if isBareVerb(c.input.Value()) {
 				return nil
@@ -1256,8 +1426,8 @@ func (a *App) renderChat(l layout) string {
 			lw := lipgloss.Width(label)
 			idx := i
 			popupZones = append(popupZones, zone{x0: x, y0: 2 + topH, x1: x + lw, y1: 3 + topH, click: func(int, int, bool) tea.Cmd {
-				a.acceptSuggestion(idx)
-				return a.focusComposer()
+				a.blurForm()
+				return a.pickSuggestion(idx)
 			}})
 			x += lw + 1
 		}
@@ -1307,9 +1477,9 @@ func (a *App) overlaySuggestions(lines []string, width, height int) []zone {
 	if len(c.sugg) > rows {
 		title += fmt.Sprintf("  %d–%d of %d", c.suggOff2+1, c.suggOff2+rows, len(c.sugg))
 	}
-	hint := "↓ choose · tab/⏎ pick"
+	hint := "↓ choose · tab fill in · ⏎ open"
 	if c.suggIdx >= 0 {
-		hint = "↑↓ move · tab/⏎ pick · esc back"
+		hint = "↑↓ move · tab fill in · ⏎ open · esc back"
 	}
 	if top := height - rows - 1; top >= 0 {
 		head := padRight(" "+strings.TrimSpace(title+"  "+hint), width)
@@ -1339,8 +1509,8 @@ func (a *App) overlaySuggestions(lines []string, width, height int) []zone {
 		idx := i
 		zones = append(zones, zone{x0: 0, y0: 2 + row, x1: width, y1: 3 + row,
 			click: func(int, int, bool) tea.Cmd {
-				a.acceptSuggestion(idx)
-				return a.focusComposer()
+				a.blurForm()
+				return a.pickSuggestion(idx)
 			},
 			wheel: func(d int) tea.Cmd {
 				c.suggOff2 = min(max(c.suggOff2+d, 0), max(len(c.sugg)-rows, 0))

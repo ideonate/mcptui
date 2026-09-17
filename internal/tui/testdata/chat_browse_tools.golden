@@ -19,12 +19,12 @@ mcptui ─ test ─ testserver 1.2.3 (#)                                        
                                         │     "subscribe": true
                                         │   },
                                         │   "tools": {
- ⚒ Tools (5)  ↑↓ move · tab/⏎ pick · esc back
- ⚒ echo               Echo back the **message**.
- ⚒ add                Add two numbers.
- ⚒ slow               Reports progress for `steps` steps.
- ⚒ fail               Always returns isError.
- ⚒ delete_everything  Pretends to delete things.
+ ⚒ Tools (5)  ↑↓ move · tab fill in · ⏎ open · esc back
+ ⚒ echo               (message) Echo back the **message**.
+ ⚒ add                (a, b) Add two numbers.
+ ⚒ slow               (interval?, steps?) Reports progress for `steps` steps.
+ ⚒ fail               () Always returns isError.
+ ⚒ delete_everything  () Pretends to delete things.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  › call
  ⏎ send  tab complete  ↑ previous  shift+tab transcript  esc tabs

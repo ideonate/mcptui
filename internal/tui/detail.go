@@ -526,6 +526,9 @@ func (a *App) execute() tea.Cmd {
 	cmd := a.invoke(a.tab, key, args)
 	if a.tab == tabChat && cmd != nil {
 		a.closeCompose()
+		c := a.chat
+		c.cmdHist = append(c.cmdHist, commandLine(key, args))
+		c.histIdx = len(c.cmdHist)
 	}
 	return cmd
 }
@@ -1229,6 +1232,11 @@ func (a *App) actionHints(key, kind string, f *schemaform.Form, height int) stri
 		}
 	case "tmpl":
 		btn("Read", "enter", a.execute)
+	}
+	if a.tab == tabChat && a.chat.compose == key && len(parts) > 0 {
+		// Next to the primary action, so it isn't the one that gets cut off.
+		btn("Cancel", "esc", func() tea.Cmd { a.closeCompose(); return a.focusComposer() })
+		parts = append([]string{parts[0], parts[len(parts)-1]}, parts[1:len(parts)-1]...)
 	}
 	return strings.Join(parts, " ")
 }
