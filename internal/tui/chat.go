@@ -815,9 +815,14 @@ func (a *App) composerKey(msg tea.Msg) tea.Cmd {
 				return nil
 			}
 		case "up", "ctrl+p":
-			if c.menuMode() && c.suggIdx >= 0 {
+			// The browse bar sits above the box: ↑ highlights it, and ↑
+			// again carries on into command history.
+			if c.menuMode() {
+				if c.suggIdx < 0 {
+					c.suggIdx = 0
+					return nil
+				}
 				c.suggIdx = -1
-				return nil
 			}
 			if len(c.sugg) > 0 && c.suggIdx >= 0 {
 				c.suggIdx--
@@ -838,10 +843,8 @@ func (a *App) composerKey(msg tea.Msg) tea.Cmd {
 			}
 			return nil
 		case "down", "ctrl+n":
-			if c.menuMode() {
-				if c.suggIdx < 0 {
-					c.suggIdx = 0
-				}
+			if c.menuMode() && c.suggIdx >= 0 {
+				c.suggIdx = -1
 				return nil
 			}
 			if len(c.sugg) > 0 {
@@ -1258,9 +1261,9 @@ func (a *App) renderChat(l layout) string {
 			}})
 			x += lw + 1
 		}
-		hint := "↓ browse"
+		hint := "↑ browse"
 		if c.suggIdx >= 0 {
-			hint = "←→ ⏎ pick · ↑ back"
+			hint = "←→ ⏎ pick · ↓ back"
 		}
 		bottom = append(bottom, fitLines(" "+strings.Join(parts, " ")+"  "+th.dimText.Render(hint), w, 1))
 	} else if a.focus == focusComposer && len(c.sugg) > 0 {

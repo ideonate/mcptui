@@ -24,7 +24,7 @@ mcptui ─ test ─ testserver 1.2.3 (#)                                        
                                         │ }
 ▌ ● Connected to testserver 1.2.3       │
 ▌   Use echo to test.                   │
-  ⚒ Tools   ✎ Prompts   ▤ Resources & templates   ↔ Ping   ↓ browse
+  ⚒ Tools   ✎ Prompts   ▤ Resources & templates   ↔ Ping   ↑ browse
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  › tool, prompt or resource #
- ⏎ send  tab complete  ↑ previous  shift+tab transcript  esc tabs
+ ⏎ send  tab complete  ↑↑ previous  shift+tab transcript  esc tabs

@@ -1251,7 +1251,11 @@ func (a *App) renderFooter() string {
 	case a.tab == tabLog:
 		hints = [][2]string{{"esc", "tabs"}, {"j/k", "scroll"}, {"G", "follow"}, {"t", "traffic"}, {"c", "clear"}, {"[ ]", "tabs"}, {"q", "quit"}}
 	case a.tab == tabChat && a.focus == focusComposer:
-		hints = [][2]string{{"⏎", "send"}, {"tab", "complete"}, {"↑", "previous"}, {"shift+tab", "transcript"}, {"esc", "tabs"}}
+		prev := "↑"
+		if a.chat.menuMode() {
+			prev = "↑↑" // the first ↑ highlights the browse bar
+		}
+		hints = [][2]string{{"⏎", "send"}, {"tab", "complete"}, {prev, "previous"}, {"shift+tab", "transcript"}, {"esc", "tabs"}}
 	case a.tab == tabChat && a.focus == focusList:
 		hints = [][2]string{{"↑↓", "select"}, {"⏎", "details"}, {"e", "edit"}, {"r", "rerun"}, {"a", "show all"}, {"esc", "message box"}}
 	case a.tab == tabChat && a.focus == focusResult:

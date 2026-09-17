@@ -116,7 +116,7 @@ func newHelpOverlay(a *App) overlay {
 				{"c / C", "copy as mcptui command / curl"}, {"esc", "back to form"},
 			}),
 			sec("Chat", [][2]string{
-				{"name args", `send: add {"a":1} · add a=1 · greet name=Ada · read <uri> · ping`}, {"tab", "complete a name"}, {"↓ (empty box)", "browse Tools / Prompts / Resources, ←→ ⏎ to pick a category"},
+				{"name args", `send: add {"a":1} · add a=1 · greet name=Ada · read <uri> · ping`}, {"tab", "complete a name"}, {"↑ (empty box)", "browse Tools / Prompts / Resources, ←→ ⏎ to pick a category, ↑ again for earlier commands"},
 				{"↑ ↓", "earlier commands (or pick a suggestion)"}, {"shift+tab", "into the transcript: ↑↓ select, r rerun, e edit, a show all"},
 				{"ctrl+r", "rerun the selected request"}, {"e", "edit its arguments in a form"},
 			}),

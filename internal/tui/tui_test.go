@@ -326,8 +326,8 @@ func TestChatComposer(t *testing.T) {
 		return it != nil && it.name == "test://items/7" && it.entry != nil
 	})
 
-	// ↑ recalls the previous command.
-	h.key("up")
+	// ↑ ↑ (past the browse bar) recalls the previous command.
+	h.key("up", "up")
 	if v := h.a.chat.input.Value(); v != "read test://items/{id} id=7" {
 		t.Fatalf("history recall = %q", v)
 	}
@@ -953,8 +953,8 @@ func TestChatBrowseMenu(t *testing.T) {
 	if !strings.Contains(s, "⚒ Tools") || !strings.Contains(s, "✎ Prompts") || !strings.Contains(s, "▤ Resources & templates") {
 		t.Fatalf("empty message box should offer the browse bar:\n%s", s)
 	}
-	// ↓ highlights the bar, → moves, ⏎ opens the category.
-	h.key("down")
+	// ↑ highlights the bar, → moves, ⏎ opens the category.
+	h.key("up")
 	h.send(tea.KeyPressMsg{Code: tea.KeyRight})
 	h.send(tea.KeyPressMsg{Code: tea.KeyLeft})
 	h.key("enter")
@@ -974,7 +974,7 @@ func TestChatBrowseMenu(t *testing.T) {
 	h.waitFor("slow", func() bool { it := h.a.chat.selected(); return it != nil && it.name == "slow" && it.entry != nil })
 
 	// esc on a bare category goes back to the bar.
-	h.key("down", "right", "right", "enter")
+	h.key("up", "right", "right", "enter")
 	if v := h.a.chat.input.Value(); v != "read " {
 		t.Fatalf("third category = %q", v)
 	}
@@ -985,8 +985,16 @@ func TestChatBrowseMenu(t *testing.T) {
 	if h.a.chat.input.Value() != "" || !h.a.chat.menuMode() {
 		t.Fatal("esc should return to the browse bar")
 	}
-	// ↑ from the (unhighlighted) bar still recalls commands.
+	// ↑ highlights the bar, ↓ leaves it, and ↑ ↑ recalls commands.
 	h.key("up")
+	if h.a.chat.suggIdx != 0 {
+		t.Fatal("↑ should highlight the bar")
+	}
+	h.key("down")
+	if h.a.chat.suggIdx != -1 {
+		t.Fatal("↓ should leave the bar")
+	}
+	h.key("up", "up")
 	if v := h.a.chat.input.Value(); v != "call slow" {
 		t.Fatalf("recall = %q", v)
 	}
