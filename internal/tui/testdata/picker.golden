@@ -1,0 +1,30 @@
+mcptui ─ profiles
+ Profiles   CONFIG
+ Choose a profile   double-click or ⏎ to connect
+/ filter
+profiles
+  cmd python -m my server
+  one http://SERVER/one
+▸ two ★  staging  http://SERVER/two
+
+  + New #
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ ⏎ connect  n new  e edit  d delete  * default  / filter  esc quit

@@ -1,0 +1,30 @@
+mcptui ─ test ─ testserver 1.2.3 (#)                                           ● connected
+ 1 Tools (5)   2 Prompts (1)   3 Resources (4)   4 Chat (1)   5 Log
+                                        │ ● Connected to testserver 1.2.3
+                                        │ # # · # · ok
+                                        │──────────────────────────────────────────────────────────
+                                        │ Result initialize  ✓ #   (p)retty (m)arkdown (r)aw  [ #
+                                        │ testserver 1.2.3
+                                        │ protocol # · http://#/mcp
+                                        │
+                                        │ ── instructions ─────────────────────────────────────────
+                                        │   Use echo to test.
+                                        │
+                                        │ ── capabilities ─────────────────────────────────────────
+                                        │ {
+                                        │   "completions": {},
+                                        │   "logging": {},
+                                        │   "prompts": {},
+                                        │   "resources": {
+                                        │     "subscribe": true
+                                        │   },
+                                        │   "tools": {
+                                        │     "listChanged": true
+                                        │   }
+                                        │ }
+▌ ● Connected to testserver 1.2.3       │
+▌   Use echo to test.                   │  In the message box:
+  ⚒ Tools   ✎ Prompts   ▤ Resources & templates   ↔ Ping   ↓ browse
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ › tool, prompt or resource #
+ ⏎ send  tab complete  ↑ previous  shift+tab transcript  esc tabs

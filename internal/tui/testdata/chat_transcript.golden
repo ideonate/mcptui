@@ -1,0 +1,30 @@
+mcptui ─ test ─ testserver 1.2.3 (#)                                           ● connected
+ 1 Tools (5)   2 Prompts (1)   3 Resources (4)   4 Chat (3)   5 Log
+                                        │ ⚒ add tools/call
+                                        │ # # · # · ok
+                                        │ [ Rerun ctrl+r ] [ Edit e ] [ Copy cmd c ] [ curl C ]
+                                        │ ── arguments ────────────────────────────────────────────
+                                        │ {
+                                        │   "a": 1,
+                                        │   "b": 1
+                                        │ }
+                                        │──────────────────────────────────────────────────────────
+                                        │ Result add  ✓ #   (p)retty (m)arkdown (r)aw  [ Copy y #
+                                        │ 2
+                                        │ ── structuredContent ✓ matches outputSchema ─────────────
+                                        │ {
+                                        │   "sum": 2
+                                        │ }
+                                        │
+                                        │
+  ● Connected to testserver 1.2.3       │
+    Use echo to test.                   │
+                                        │
+▌ ⚒ add {"a":1,"b":1}                   │
+▌   2                                   │
+                                        │
+  ↔ ping                                │
+    pong                                │
+────────────────────────────────────────────────────────────────────────────────────────────────────
+ › tool, prompt or resource #
+ ↑↓ select  ⏎ details  e edit  r rerun  a show all  esc message box

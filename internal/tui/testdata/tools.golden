@@ -1,0 +1,30 @@
+mcptui ─ test ─ testserver 1.2.3 (#)                                           ● connected
+ 1 Tools (5)   2 Prompts (1)   3 Resources (4)   4 Chat (1)   5 Log
+/ filter                      │ echo  [read-only]
+▸ echo ro                     │ ────────────────────────────────────────────────────────────────────
+  add ro                      │   Echo back the message.
+  slow                        │
+  fail                        │   message * string
+  delete_everything ⚠         │     Text to echo
+                              │
+                              │
+                              │
+                              │
+                              │
+                              │
+                              │
+                              │
+                              │
+                              │
+                              │
+                              │
+                              │
+                              │
+                              │
+                              │
+                              │
+                              │
+                              │
+                              │
+                              │ [ Call ⏎ ] [ Edit JSON e ] [ Copy cmd c ] [ Docs d ]
+ ? help  ⏎ open  tab focus  esc tabs  / filter  e json  R refresh  L login  i info  ctrl+p #
