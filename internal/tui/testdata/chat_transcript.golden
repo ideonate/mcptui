@@ -9,7 +9,7 @@ mcptui ─ test ─ testserver 1.2.3 (#)                                        
                                         │   "b": 1
                                         │ }
                                         │──────────────────────────────────────────────────────────
-                                        │ Result add  ✓ #   (p)retty (m)arkdown (r)aw  [ Copy y #
+                                        │ Result add  ✓ #   (p)retty (m)arkdown (r)aw
                                         │ 2
                                         │ ── structuredContent ✓ matches outputSchema ─────────────
                                         │ {

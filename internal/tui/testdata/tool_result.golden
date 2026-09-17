@@ -14,7 +14,7 @@ mcptui ─ test ─ testserver 1.2.3 (#)                                        
                               │
                               │ [ Call ⏎ ] [ Edit JSON e ] [ Copy cmd c ] [ Docs d ]
                               │━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                              │ Result add  ✓ #   (p)retty (m)arkdown (r)aw  [ Copy y ] [ Save s ]
+                              │ Result add  ✓ #   (p)retty (m)arkdown (r)aw
                               │ 5
                               │ ── structuredContent ✓ matches outputSchema ───────────────────────
                               │ {

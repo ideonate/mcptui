@@ -3,7 +3,7 @@ mcptui ─ test ─ testserver 1.2.3 (#)                                        
                                         │ ● Connected to testserver 1.2.3
                                         │ # # · # · ok
                                         │──────────────────────────────────────────────────────────
-                                        │ Result initialize  ✓ #   (p)retty (m)arkdown (r)aw  [ #
+                                        │ Result initialize  ✓ #   (p)retty (m)arkdown (r)aw
                                         │ testserver 1.2.3
                                         │ protocol # · http://#/mcp
                                         │

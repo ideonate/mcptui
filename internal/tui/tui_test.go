@@ -55,7 +55,9 @@ func newHarness(t *testing.T, prof func(p *config.Profile), sopts testserver.Opt
 	})
 	h.send(tea.WindowSizeMsg{Width: 100, Height: 30})
 	h.run(a.Init())
-	h.waitFor("connected and tools listed", func() bool { return a.state == stateConnected && len(a.tools) == 5 && len(a.templates) == 1 })
+	h.waitFor("connected and lists loaded", func() bool {
+		return a.state == stateConnected && len(a.tools) == 5 && len(a.prompts) == 1 && len(a.resources) == 3 && len(a.templates) == 1
+	})
 	return h
 }
 
@@ -185,6 +187,9 @@ var volatile = []*regexp.Regexp{
 
 func golden(t *testing.T, name, got string) {
 	t.Helper()
+	// Result headers end in buttons that get cut off at different points
+	// depending on how long the duration is; compare only up to the modes.
+	got = regexp.MustCompile(`(?m)(\(r\)aw).*$`).ReplaceAllString(got, "$1")
 	for _, re := range volatile {
 		got = re.ReplaceAllString(got, "#")
 	}
