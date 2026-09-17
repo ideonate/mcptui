@@ -71,13 +71,13 @@ mcptui ─ everything  dev  ─ mcp-servers/everything 2.0.0 (2025-11-25)       
 
 ## Install
 
-Prebuilt binaries for macOS, Linux and Windows are attached to each [release](https://github.com/ideonate/mcptui/releases). The commands below use the [GitHub CLI](https://cli.github.com) (`gh`), which fetches the latest release and also works while the repository is private.
+Prebuilt binaries for macOS, Linux and Windows are attached to each [release](https://github.com/ideonate/mcptui/releases). The commands below download the latest release with `curl`; `gh release download -R ideonate/mcptui -p '<pattern>' -O -` works too.
 
 ### macOS
 
 ```sh
 # Apple Silicon; use darwin_amd64 on an Intel Mac
-gh release download -R ideonate/mcptui -p '*darwin_arm64.tar.gz' -O - | tar -xzf - mcptui
+curl -fsSL https://github.com/ideonate/mcptui/releases/latest/download/mcptui_darwin_arm64.tar.gz | tar -xzf - mcptui
 
 # /usr/local/bin is owned by root on macOS, so this needs sudo
 sudo mkdir -p /usr/local/bin
@@ -92,7 +92,7 @@ mkdir -p ~/.local/bin && mv mcptui ~/.local/bin/
 echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc
 ```
 
-The binaries aren't notarized. Files fetched with `gh` or `curl` run as-is, but if you downloaded the archive in a browser and macOS refuses to open `mcptui`, clear the quarantine flag:
+The binaries aren't notarized. Files fetched with `curl` or `gh` run as-is, but if you downloaded the archive in a browser and macOS refuses to open `mcptui`, clear the quarantine flag:
 
 ```sh
 xattr -d com.apple.quarantine "$(command -v mcptui)"
@@ -102,7 +102,7 @@ xattr -d com.apple.quarantine "$(command -v mcptui)"
 
 ```sh
 # x86_64; use linux_arm64 on ARM machines
-gh release download -R ideonate/mcptui -p '*linux_amd64.tar.gz' -O - | tar -xzf - mcptui
+curl -fsSL https://github.com/ideonate/mcptui/releases/latest/download/mcptui_linux_amd64.tar.gz | tar -xzf - mcptui
 sudo install -m 0755 mcptui /usr/local/bin/mcptui
 mcptui --version
 ```
@@ -111,19 +111,17 @@ Or without sudo: `install -D -m 0755 mcptui ~/.local/bin/mcptui` (`~/.local/bin`
 
 ### Windows
 
-Download `mcptui_*_windows_amd64.zip` from the release page and put `mcptui.exe` somewhere on your `PATH`.
+Download [`mcptui_windows_amd64.zip`](https://github.com/ideonate/mcptui/releases/latest/download/mcptui_windows_amd64.zip) and put `mcptui.exe` somewhere on your `PATH`.
 
 ### Upgrading
 
-Run the same commands again: `gh` downloads the latest release and the copy step replaces the old binary.
+Run the same commands again: they download the latest release, and the copy step replaces the old binary.
 
 ### From source
 
 ```sh
 go install github.com/ideonate/mcptui@latest
 ```
-
-(For a private repository this needs `GOPRIVATE=github.com/ideonate/*` and git credentials for GitHub.)
 
 ## Quick start
 
