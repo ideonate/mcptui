@@ -569,7 +569,8 @@ func (a *App) openCompose(key string, args json.RawMessage) tea.Cmd {
 	}
 	f := a.formFor(key)
 	if f == nil {
-		a.setFlash("%s is no longer listed by the server", strings.SplitN(key, ":", 2)[1])
+		_, name, _ := strings.Cut(key, ":")
+		a.setFlash("%s is no longer listed by the server", name)
 		return nil
 	}
 	if len(args) > 0 {
@@ -601,7 +602,7 @@ func (c *chatState) menuMode() bool {
 // runAgain repeats the selected item exactly.
 func (a *App) runAgain() tea.Cmd {
 	it := a.chat.selected()
-	if it == nil || it.hidden() {
+	if it == nil || !it.isCall() {
 		return nil
 	}
 	a.chat.follow = true
@@ -611,7 +612,7 @@ func (a *App) runAgain() tea.Cmd {
 // editItem opens the selected item's form with its arguments.
 func (a *App) editItem() tea.Cmd {
 	it := a.chat.selected()
-	if it == nil || it.hidden() {
+	if it == nil || !it.isCall() {
 		return nil
 	}
 	return a.openCompose(it.key, it.args)
@@ -928,7 +929,7 @@ func (a *App) chatKey(k tea.KeyPressMsg) tea.Cmd {
 			return a.runAgain()
 		case "a":
 			return a.toggleShowAll()
-		case "esc", "tab", "i":
+		case "esc", "tab":
 			return a.focusComposer()
 		case "shift+tab":
 			return a.focusTabBar()

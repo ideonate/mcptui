@@ -1019,6 +1019,14 @@ func TestChatShowsConnectionAndServerMessages(t *testing.T) {
 	}
 	golden(t, "chat_intro", s)
 
+	// The intro isn't a call: double-click, e and r do nothing (and don't panic).
+	h.doubleClick("▌ ● Connected to testserver")
+	h.key("e", "r")
+	if h.a.chat.compose != "" || h.a.focus != focusList {
+		t.Fatalf("editing the intro: compose %q focus %d", h.a.chat.compose, h.a.focus)
+	}
+	h.key("esc")
+
 	// A call that makes the server log: the notification appears but the
 	// call stays selected.
 	h.typeText(`echo message=hi`)
