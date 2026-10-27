@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -34,7 +33,7 @@ type Options struct {
 	CredentialsPath string
 	HistoryPath     string // "" = default when persisting
 	NoMouse         bool   // leave the mouse to the terminal (native selection)
-	Dark            *bool  // nil = detect
+	Light           bool   // light theme; dark by default (the terminal is never asked)
 }
 
 type tabID int
@@ -228,11 +227,7 @@ type App struct {
 
 // New creates the model (without starting a program).
 func New(opts Options) *App {
-	dark := true
-	if opts.Dark != nil {
-		dark = *opts.Dark
-	}
-	th := newTheme(dark)
+	th := newTheme(!opts.Light)
 	a := &App{
 		opts:       opts,
 		th:         th,
@@ -269,10 +264,6 @@ func New(opts Options) *App {
 
 // Run starts the TUI.
 func Run(opts Options) error {
-	if opts.Dark == nil {
-		d := lipgloss.HasDarkBackground(os.Stdin, os.Stdout)
-		opts.Dark = &d
-	}
 	a := New(opts)
 	p := tea.NewProgram(a)
 	a.br.mu.Lock()

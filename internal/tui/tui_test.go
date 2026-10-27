@@ -44,9 +44,8 @@ func newHarness(t *testing.T, prof func(p *config.Profile), sopts testserver.Opt
 	if prof != nil {
 		prof(p)
 	}
-	dark := true
 	dir := t.TempDir()
-	a := New(Options{Profile: p, NoHistory: true, CredentialsPath: filepath.Join(dir, "creds.json"), Dark: &dark})
+	a := New(Options{Profile: p, NoHistory: true, CredentialsPath: filepath.Join(dir, "creds.json")})
 	h := &harness{t: t, a: a, msgs: make(chan tea.Msg, 256), srv: srv}
 	t.Cleanup(func() {
 		if a.sess != nil {
@@ -621,8 +620,7 @@ func newPickerHarness(t *testing.T, cfgText string) (*harness, string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	dark := true
-	a := New(Options{Config: cfg, NoHistory: true, CredentialsPath: filepath.Join(dir, "creds.json"), Dark: &dark})
+	a := New(Options{Config: cfg, NoHistory: true, CredentialsPath: filepath.Join(dir, "creds.json")})
 	h := &harness{t: t, a: a, msgs: make(chan tea.Msg, 256)}
 	t.Cleanup(func() {
 		if a.sess != nil {

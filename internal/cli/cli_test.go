@@ -216,3 +216,15 @@ func TestSplitCommand(t *testing.T) {
 		t.Fatal("expected error")
 	}
 }
+
+func TestLightTheme(t *testing.T) {
+	for v, want := range map[string]bool{"": false, "dark": false, "light": true} {
+		got, err := lightTheme(v)
+		if err != nil || got != want {
+			t.Errorf("lightTheme(%q) = %v, %v; want %v", v, got, err, want)
+		}
+	}
+	if _, err := lightTheme("Light"); err == nil {
+		t.Error("lightTheme(\"Light\"): want an error")
+	}
+}

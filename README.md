@@ -202,6 +202,8 @@ env = { LOG_LEVEL = "debug" }
 
 Values of the form `env:NAME` are read from the environment.
 
+The TUI uses a dark theme; set `MCPTUI_THEME=light` for a light one. It never asks the terminal for its background colour, since terminals that don't answer (web terminals, some relays) would leave it waiting.
+
 ## Authorization
 
 mcptui implements MCP authorization (OAuth 2.1) itself:
